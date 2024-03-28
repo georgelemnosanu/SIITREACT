@@ -1,12 +1,18 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using SIITREACT.Model;
+using SIITREACT.Service;
+using System.Security.Cryptography.X509Certificates;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
-    public class MyDbContext : DbContext
+namespace SIITREACT.Model
+{
+    public class MyDbContext : IdentityDbContext<ApplicationUser>
     {
         public MyDbContext(DbContextOptions<MyDbContext> options) : base(options)
         {
-        }
-     public DbSet<City> City { get; set; }
-
+          
+    }
+        public DbSet<Appointment> Appointments { get; set; }
+       
+    }
 }
-
