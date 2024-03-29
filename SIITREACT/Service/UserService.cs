@@ -1,5 +1,9 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Tokens;
 using SIITREACT.Model;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace SIITREACT.Service
 {
@@ -14,17 +18,40 @@ namespace SIITREACT.Service
             _userManager = userManager;
             _roleManager = roleManager; 
         }
-
-        public async Task<ApplicationUser> Authenticate(string username, string password)
+        //Logare user cu JWT TOKEN
+        public async Task<(ApplicationUser user, string token)> AuthenticateAndGenerateToken(string username, string password)
         {
             var user = await _userManager.FindByNameAsync(username);
             if (user != null && await _userManager.CheckPasswordAsync(user, password))
             {
-                return user;
+                var token = GenerateJwtToken(user); 
+                return (user, token);
             }
-            return null;
+            return (null, null);
         }
 
+        //Generare JWT TOKEN pentru logare
+        private string GenerateJwtToken(ApplicationUser user)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("your-secret-key-with-at-least-32-characters"));
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new Claim[]
+                {
+            new Claim(ClaimTypes.Name, user.UserName),
+            new Claim(ClaimTypes.Role, "user"),
+            new Claim(ClaimTypes.NameIdentifier, user.Id)
+                }),
+                Expires = DateTime.UtcNow.AddDays(7), // Token expiration time
+                SigningCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature)
+            };
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return tokenHandler.WriteToken(token);
+        }
+
+
+        //Creare user
         public async Task<IdentityResult> CreateUser(string username, string email, string password, string role)
         {
             var user = new ApplicationUser

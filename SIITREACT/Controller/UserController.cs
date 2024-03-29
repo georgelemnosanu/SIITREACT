@@ -26,54 +26,29 @@ public class UserController : ControllerBase
         _userManager = userManager;
         _signInManager = signInManager;
     }
-    /*
-        [HttpPost("login")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Login(string username, string password)
-        {
-            var user = await _userService.Authenticate(username, password);
-            if (user == null)
-                return BadRequest(new { message = "Username or password is incorrect" });
-
-            // Get roles of the user
-            var roles = await _userManager.GetRolesAsync(user);
-            var userRole = roles.FirstOrDefault();
-            var userID = await _userManager.GetUserIdAsync(user);
-
-
-            return Ok(new { user.UserName, Role = userRole ,UserID=userID }); // Return username and role
-        }*/
-
+     
+    //logare user
     [HttpPost("login")]
     [AllowAnonymous]
     public async Task<IActionResult> Login(string username, string password)
     {
-        var user = await _userService.Authenticate(username, password);
+        var (user, token) = await _userService.AuthenticateAndGenerateToken(username, password);
         if (user == null)
-            return BadRequest(new { message = "Username or password is incorrect" });
-
-        // Authentication successful, generate JWT token
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("your-secret-key-with-at-least-32-characters"));
-        var tokenDescriptor = new SecurityTokenDescriptor
         {
-            Subject = new ClaimsIdentity(new Claim[]
-            {
-        new Claim(ClaimTypes.Name, user.UserName),
-        new Claim(ClaimTypes.Role, "user"),
-        new Claim(ClaimTypes.NameIdentifier, user.Id)
-            }),
-            Expires = DateTime.UtcNow.AddDays(7), // Token expiration time
-            SigningCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature)
-        };
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        var tokenString = tokenHandler.WriteToken(token);
+            return BadRequest(new { message = "Username or password is incorrect" });
+        }
 
-        return Ok(new { token = tokenString, userName = user.UserName, role = "user", userID = user.Id });
+        return Ok(new { token, userName = user.UserName, role = "user", userID = user.Id });
+    }
+//logout logica de implementat
+[HttpPost("logout")]
+    [Authorize]
+    public IActionResult Logout()
+    {
+        return Ok(new { message = "Logout successful" });
     }
 
-
-
+    //Register user
     [HttpPost("register")]
     [AllowAnonymous]
     public async Task<IActionResult> Register(string username, string email, string password)
@@ -84,7 +59,7 @@ public class UserController : ControllerBase
         else
             return BadRequest(result.Errors);
     }
-
+    //register admin
     [HttpPost("createadmin")]
     [AllowAnonymous]
     public async Task<IActionResult> CreateAdmin(string username, string email, string password)
@@ -95,14 +70,14 @@ public class UserController : ControllerBase
         else
             return BadRequest(result.Errors);
     }
-
+    //Pagina admin
     [HttpGet("admin")]
     [AllowAnonymous]
     public IActionResult AdminPage()
     {
         return Ok("Welcome to the admin page!");
     }
-
+    //Pagina User
     [HttpGet("user")]
     [AllowAnonymous]
     public IActionResult UserPage()

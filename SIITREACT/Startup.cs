@@ -1,10 +1,14 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using SIITREACT.Model;
 using SIITREACT.Service;
 using System;
+using System.Text;
+
 
 namespace SIITREACT
 {
@@ -35,8 +39,8 @@ namespace SIITREACT
             services.AddScoped<AppointmentService>();
           
             services.AddScoped<UserService>();
-          
 
+            services.AddHttpContextAccessor();
 
             services.AddCors(options =>
             {
@@ -50,11 +54,28 @@ namespace SIITREACT
             });
 
             services.AddControllers();
+
+            var key = Encoding.ASCII.GetBytes("your-secret-key-with-at-least-32-characters");
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(options =>
+            {
+                options.RequireHttpsMetadata = false;
+                options.SaveToken = true;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = false,
+                    ValidateAudience = false
+                };
+            });
+
+
         }
-
-     
-
-    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
 
 
@@ -65,7 +86,6 @@ namespace SIITREACT
             }
 
             app.UseRouting();
-
             app.UseAuthentication(); 
             app.UseAuthorization();
             app.UseCors("AllowLocalhost3000");

@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Identity;
 using SIITREACT.Model;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Identity;
+
 
 namespace SIITREACT.Service
 {
@@ -11,6 +13,8 @@ namespace SIITREACT.Service
         private readonly MyDbContext _dbContext;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly UserService userService;
 
         public AppointmentService(MyDbContext dbContext, UserManager<ApplicationUser> userManager, IHttpContextAccessor httpContextAccessor)
         {
@@ -18,38 +22,24 @@ namespace SIITREACT.Service
             _userManager = userManager;
             _httpContextAccessor = httpContextAccessor;
         }
-
-        public string GetUserIdFromToken()
-        {
-            // Retrieve the JWT token from the request headers
-            var accessToken = _httpContextAccessor.HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
-
-            // Decode the JWT token
-            var handler = new JwtSecurityTokenHandler();
-            var jsonToken = handler.ReadToken(accessToken) as JwtSecurityToken;
-
-            // Extract the user ID from the JWT token's claims
-            var userId = jsonToken?.Claims.FirstOrDefault(c => c.Type == "nameid")?.Value;
-
-            return userId;
-        }
-
+        //Creare appointment
         public async Task<Appointment> CreateAppointment(Appointment appointment)
         {
-            var userId = GetUserIdFromToken(); // Implement this method to extract user ID from JWT token
-            if (userId == null)
+
+            var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
+            if (currentUser == null)
             {
                 throw new ApplicationException("User not authenticated");
             }
 
-            // Associate the appointment with the user ID
-            appointment.UserId = userId;
+            appointment.UserId = currentUser.Id;
 
-            // Save the appointment to the database
             _dbContext.Appointments.Add(appointment);
             await _dbContext.SaveChangesAsync();
 
             return appointment;
         }
+
+        //De facut vizualizare,stergere, editare programari
     }
 }

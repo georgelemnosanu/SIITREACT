@@ -6,11 +6,11 @@ namespace SIITREACT.Model
     [Table("Appointments")]
     public class Appointment
     {
-        public int Id { get; set; } // Unique identifier for the appointment
-        public DateTime DateAndTime { get; set; } // Date and time of the appointment
-        public string Description { get; set; } // Description of the appointment
-        public string UserId { get; set; } // Id of the user making the appointment
-        // Constructor
+        public int Id { get; set; } 
+        public DateTime DateAndTime { get; set; } 
+        public string Description { get; set; } 
+        public string UserId { get; set; } 
+       
         public Appointment(DateTime dateAndTime, string description, string userId)
         {
             DateAndTime = dateAndTime;
@@ -18,7 +18,7 @@ namespace SIITREACT.Model
             UserId = userId;
         }
 
-        // Default constructor required for Entity Framework
+       
         public Appointment() { }
     }
 }
